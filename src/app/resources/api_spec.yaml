@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
   title: "SENG365 2023: Film Festival Site API"
-  version: 1.0.0
+  version: 1.0.2
   description: "This specification documents the API that must be implemented for Assignment 1. The API provides all of the server-side functionality necessary in order to implement all the user stories for Assignment 2"
 servers:
   - url: https://seng365.csse.canterbury.ac.nz/api/v1
@@ -88,12 +88,12 @@ paths:
             schema:
               $ref: "#/components/schemas/RegisterUser"
       responses:
-        200:
-          description: "OK"
+        201:
+          description: "Created"
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResponse"
+                $ref: "#/components/schemas/RegisterResponse"
         400:
           description: "Bad Request. Invalid information"
         403:
@@ -274,7 +274,7 @@ paths:
       tags:
         - films
       summary: "View films"
-      description: "Get a list of all films with a subset of film information. By default, the films should be sorted by when they were released from oldest to newest. The list should be filtered, then sorted, then paginated using `startIndex` and `count`. The returned object should include the total number of films that match the search criteria, which may differ from the number returned by the query (this is for client pagination).<br/>The film rating is a number up to 2 decimal places, with unnecessary values ignored e.g.; 0.00 -> 0, 7.50 -> 7.5, 6.333˙ -> 6.33"
+      description: "Get a list of all films with a subset of film information. By default, the films should be sorted by when they were released from oldest to newest. The list should be filtered, then sorted, then paginated using `startIndex` and `count`. The returned object should include the total number of films that match the search criteria, which may differ from the number returned by the query (this is for client pagination).<br/>The film rating is a number up to 2 decimal places, with unnecessary values ignored e.g.; 0.00 -> 0, 7.50 -> 7.5, 6.333Ã‹â„¢ -> 6.33"
       parameters:
         - in: query
           name: startIndex
@@ -468,7 +468,7 @@ paths:
       tags:
         - films.images
       summary: "Set a film's hero image"
-      description: "Only accessible to the director of the film, similar to PATCH film this cannot be changed after a review has been placed.<br/>If the film already has a hero image, the current hero image will be replaced and a 200 OK response sent. If not, a 201 created response will be sent.<br>If the file is a `.png`, the request will be sent with `Content-Type: image/png`. If the file is a `.jpeg` or `.jpg`, the request will be sent with `Content-Type: image/jpeg`. If the file is a `.gif`, the request will be sent with `Content-Type: image/gif`. No other image types should be allowed. <br> The request body should contain the raw binary content of the photo, i.e. it should not be in `multipart/form-data` format or contain any file metadata."
+      description: "Only accessible to the director of the film, the image may be changed at any time (even if a review has already been placed). <b>This endpoint used to expect a 403 if a review was placed, for fairness we will allow either implementation</b>.<br/>If the film already has a hero image, the current hero image will be replaced and a 200 OK response sent. If not, a 201 created response will be sent.<br>If the file is a `.png`, the request will be sent with `Content-Type: image/png`. If the file is a `.jpeg` or `.jpg`, the request will be sent with `Content-Type: image/jpeg`. If the file is a `.gif`, the request will be sent with `Content-Type: image/gif`. No other image types should be allowed. <br> The request body should contain the raw binary content of the photo, i.e. it should not be in `multipart/form-data` format or contain any file metadata."
       security:
         - UserToken: []
       requestBody:
@@ -646,6 +646,14 @@ components:
       required:
         - email
         - password
+    RegisterResponse:
+      title: RegisterResponse
+      type: object
+      properties:
+        userId:
+          type: integer
+          minimum: 0
+          example: 11
     LoginResponse:
       title: LoginResponse
       type: object
@@ -654,7 +662,7 @@ components:
           type: integer
           minimum: 0
           example: 11
-        userToken:
+        token:
           type: string
           example: "JSkIEpXk0b2jLgDpRuKAjGwCbFnDM0Tj"
     PatchUser:
@@ -841,7 +849,7 @@ components:
           minimum: 1
           maximum: 10
           example: 5
-        reviewContent:
+        review:
           type: string
           minLength: 1
           maxLength: 512
@@ -860,7 +868,7 @@ components:
         rating:
           $ref: "#/components/schemas/Review/properties/rating"
         review:
-          $ref: "#/components/schemas/Review/properties/reviewContent"
+          $ref: "#/components/schemas/Review/properties/review"
       required:
         - rating
   securitySchemes:
