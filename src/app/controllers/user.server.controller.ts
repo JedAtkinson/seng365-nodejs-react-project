@@ -1,9 +1,23 @@
 import {Request, Response} from "express";
 import Logger from "../../config/logger";
+import * as users from '../models/user.server.model';
+import * as schemas from '../resources/schemas.json';
+import {validateSchema, validateEmail, validatePassword} from './validator';
 
 const register = async (req: Request, res: Response): Promise<void> => {
+    Logger.http(`POST registering new user`);
+    const validation = await validateSchema(
+        schemas.user_register,
+        req.body) &&
+        await validateEmail(req.body.email) &&
+        await validatePassword(req.body.password);
+    if (validation !== true) {
+        res.statusMessage = `Bad Request. Invalid information`;
+        res.status(400).send();
+        return;
+    }
     try{
-        // Your code goes here
+        const result = await users.insert(req.body);
         res.statusMessage = "Not Implemented Yet!";
         res.status(501).send();
         return;
