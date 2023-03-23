@@ -8,23 +8,25 @@ const register = async (req: Request, res: Response): Promise<void> => {
     Logger.http(`POST registering new user`);
     const validation = await validateSchema(
         schemas.user_register,
-        req.body) &&
-        await validateEmail(req.body.email) &&
-        await validatePassword(req.body.password);
-    if (validation !== true) {
+        req.body)
+    if (validation !== true || !validateEmail(req.body.email) || !validatePassword(req.body.password)) {
         res.statusMessage = `Bad Request. Invalid information`;
         res.status(400).send();
         return;
     }
     try{
         const result = await users.insert(req.body);
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        res.status( 201 ).send({"userId": result.insertId} );
         return;
     } catch (err) {
-        Logger.error(err);
-        res.statusMessage = "Internal Server Error";
-        res.status(500).send();
+        if (err.message === `Duplicate entry '${req.body.email}' for key 'unique_key'`) {
+            res.statusMessage = "Forbidden. Email already in use";
+            res.status(403).send();
+        } else {
+            Logger.error(err);
+            res.statusMessage = "Internal Server Error";
+            res.status(500).send();
+        }
         return;
     }
 }

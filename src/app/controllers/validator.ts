@@ -13,12 +13,12 @@ const validateSchema = async (schema: object, data: any) => {
     }
 }
 
-const validateEmail = async (email: string) => {
+const validateEmail = (email: string) => {
     const regex = new RegExp('[a-z0-9]+@[a-z0-9]\.[a-z0-9]')
     return regex.test(email);
 }
 
-const validatePassword = async (password: string) => {
+const validatePassword = (password: string) => {
     return password.length >= 6;
 }
 
