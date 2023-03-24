@@ -32,10 +32,23 @@ const register = async (req: Request, res: Response): Promise<void> => {
 }
 
 const login = async (req: Request, res: Response): Promise<void> => {
+    Logger.http(`POST logging in user`);
+    const validation = await validateSchema(
+        schemas.user_login,
+        req.body)
+    if (validation !== true) {
+        res.statusMessage = `Bad Request. Invalid information`;
+        res.status(400).send();
+        return;
+    }
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        const result = await users.generateToken(req.body);
+        if (result === null) {
+            res.statusMessage = "Not Authorised. Incorrect email/password";
+            res.status(401).send();
+        } else {
+            res.status(200).send(result);
+        }
         return;
     } catch (err) {
         Logger.error(err);
