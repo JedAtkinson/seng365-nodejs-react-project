@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 const ajv = new Ajv({removeAdditional: 'all', strict: false});
+import * as schemas from '../resources/schemas.json';
 
 const validateSchema = async (schema: object, data: any) => {
     try {
@@ -22,4 +23,24 @@ const validatePassword = (password: string) => {
     return password.length >= 6;
 }
 
-export {validateSchema, validateEmail, validatePassword}
+const validateNewUser = async (data: any) => {
+    const validSchema = await validateSchema(schemas.user_register, data);
+    if (validSchema !== true) {
+        return validSchema;
+    }
+    const validEmail = data.hasOwnProperty("email") ? validateEmail(data.email) : true;
+    const validPassword = data.hasOwnProperty("password") ? validatePassword(data.password) : true;
+    return validEmail && validPassword;
+}
+
+const validateUserUpdate = async (data: any) => {
+    const validSchema = await validateSchema(schemas.user_edit, data);
+    if (validSchema !== true) {
+        return validSchema;
+    }
+    const validEmail = data.hasOwnProperty("email") ? validateEmail(data.email) : true;
+    const validPassword = data.hasOwnProperty("password") ? validatePassword(data.password) : true;
+    return validEmail && validPassword;
+}
+
+export {validateSchema, validateEmail, validatePassword, validateNewUser, validateUserUpdate}
