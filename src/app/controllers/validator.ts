@@ -15,8 +15,8 @@ const validateSchema = async (schema: object, data: any) => {
 }
 
 const validateEmail = (email: string) => {
-    const regex = new RegExp('[a-z0-9]+@[a-z0-9]\.[a-z0-9]')
-    return regex.test(email);
+    return (email.includes('@') && email.indexOf('@') !== 0 &&
+        email.includes('.', email.indexOf('@')) && email.indexOf('.') !== email.length);
 }
 
 const validatePassword = (password: string) => {
@@ -43,4 +43,4 @@ const validateUserUpdate = async (data: any) => {
     return validEmail && validPassword;
 }
 
-export {validateSchema, validateEmail, validatePassword, validateNewUser, validateUserUpdate}
+export {validateSchema, validateNewUser, validateUserUpdate}

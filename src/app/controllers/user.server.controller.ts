@@ -2,7 +2,7 @@ import {Request, Response} from "express";
 import Logger from "../../config/logger";
 import * as users from '../models/user.server.model';
 import * as schemas from '../resources/schemas.json';
-import {validateSchema, validateEmail, validatePassword, validateUserUpdate, validateNewUser} from './validator';
+import {validateSchema, validateUserUpdate, validateNewUser} from './validator';
 import {findUserIdByToken} from "../models/user.server.model";
 
 const register = async (req: Request, res: Response): Promise<void> => {
@@ -114,7 +114,11 @@ const update = async (req: Request, res: Response): Promise<void> => {
         return;
     }
     const validation = await validateUserUpdate(req.body)
-    if (validation !== true) {
+    // Check if supplying both password and currentPassword if changing password or neither if not
+    const passChangeCheck: boolean = !(req.body.hasOwnProperty("password") && !req.body.hasOwnProperty("currentPassword")) ||
+        (req.body.hasOwnProperty("password") && !req.body.hasOwnProperty("currentPassword"));
+    const changingPass = passChangeCheck && req.body.hasOwnProperty("password") && req.body.hasOwnProperty("currentPassword");
+    if (validation !== true || !passChangeCheck) {
         res.statusMessage = `Bad Request. Invalid information`;
         res.status(400).send();
         return;
@@ -123,11 +127,15 @@ const update = async (req: Request, res: Response): Promise<void> => {
         const id = req.params.id;
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;
-        if (authUserId === null) {
+        const verifyPass = changingPass ? await users.verifyUser(parseInt(id, 10), req.body.currentPassword) : true;
+        if (authUserId === null || !verifyPass) {
             res.status(401).send("Unauthorized or Invalid currentPassword");
             return;
         } if (authUserId !== parseInt(id, 10)) {
             res.status(403).send("Forbidden. This is not your account");
+            return;
+        } if (changingPass && req.body.password === req.body.currentPassword) {
+            res.status(403).send("Forbidden. identical current and new passwords");
             return;
         }
         const result = await users.alter(parseInt(id, 10), req.body)
@@ -138,9 +146,13 @@ const update = async (req: Request, res: Response): Promise<void> => {
         }
         return;
     } catch (err) {
-        Logger.error(err);
-        res.statusMessage = "Internal Server Error";
-        res.status(500).send();
+        if (err.message === `Duplicate entry '${req.body.email}' for key 'unique_key'`) {
+            res.status(403).send("Forbidden. Email already in use");
+        } else {
+            Logger.error(err);
+            res.statusMessage = "Internal Server Error";
+            res.status(500).send();
+        }
         return;
     }
 }
