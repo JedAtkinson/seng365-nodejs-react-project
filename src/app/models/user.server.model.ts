@@ -35,7 +35,7 @@ const findUserIdByToken = async (token: string): Promise<number> => {
     const query = `select id from user where auth_token = '${token}'`;
     const [ result ] = await conn.query(query);
     await conn.release();
-    return result[0].id;
+    return result.length !== 0 ? result[0].id : null;
 }
 
 const removeToken = async (token: string): Promise<ResultSetHeader> => {

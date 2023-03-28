@@ -14,10 +14,19 @@ const getOne = async (id: number): Promise<{"image_filename": string}[]> => {
 const insert = async (id: number, filename: string): Promise<ResultSetHeader[]> => {
     Logger.info(`Adding image to database`);
     const conn = await getPool().getConnection();
-    const query = `insert into users (image_filename) '${filename}' where id = ${id}`;
+    const query = `update user set image_filename = '${filename}' where id = ${id}`;
     const [ result ] = await conn.query(query);
     await conn.release();
     return result;
 }
 
-export { getOne, insert }
+const remove = async (id: number): Promise<ResultSetHeader> => {
+    Logger.info(`Deleting user ${id}'s image from the database`);
+    const conn = await getPool().getConnection();
+    const query = `update user set image_filename = null where id = ${id}`;
+    const [ result ] = await conn.query(query);
+    await conn.release();
+    return result;
+}
+
+export { getOne, insert, remove }
