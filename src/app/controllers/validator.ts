@@ -2,6 +2,11 @@ import Ajv from 'ajv';
 const ajv = new Ajv({removeAdditional: 'all', strict: false});
 import * as schemas from '../resources/schemas.json';
 
+ajv.addFormat("integer", {
+    type: "string",
+    validate: (x: string) => {return !isNaN(Number(x));},
+})
+
 const validateSchema = async (schema: object, data: any) => {
     try {
         const validator = ajv.compile(schema);
