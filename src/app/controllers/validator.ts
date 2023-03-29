@@ -7,6 +7,11 @@ ajv.addFormat("integer", {
     validate: (x: string) => {return !isNaN(Number(x));},
 })
 
+ajv.addFormat("datetime", {
+    type: "string",
+    validate: (x: string) => {return !isNaN(Date.parse(x));},
+})
+
 const validateSchema = async (schema: object, data: any) => {
     try {
         const validator = ajv.compile(schema);

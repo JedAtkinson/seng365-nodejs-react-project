@@ -11,7 +11,7 @@ type Film = {
 }
 
 type FilmsQuery = {
-    startIndex: number,
+    start: number,
     count: number,
     q: string,
     genreIds: number[],
