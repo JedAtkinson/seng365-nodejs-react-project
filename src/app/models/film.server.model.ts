@@ -13,12 +13,12 @@ const getAll = async (filmQuery: FilmsQuery): Promise<Film[]> => {
     if (filmQuery.ageRatings) query += ` and film.age_rating in ('${filmQuery.ageRatings.join(',').split(',').join("', '")}')`
     if (filmQuery.directorId) query += ` and film.director_id = ${filmQuery.directorId}`;
     if (filmQuery.reviewerId) query += ` and film_review.user_id = ${filmQuery.reviewerId}`;
-    query += ` order by`;
     if (filmQuery.sortBy) {
         const sortVals: {[key: string]: string} = {'ALPHABETICAL_ASC': 'film.title asc', 'ALPHABETICAL_DESC': 'film.title desc', 'RELEASED_ASC': 'film.release_date asc', 'RELEASED_DESC': 'film.release_date desc', 'RATING_ASC': 'film_review.rating asc', 'RATING_DESC': 'film_review.rating desc'};
-        query += ` ${sortVals[filmQuery.sortBy]},`;
+        query += ` order by ${sortVals[filmQuery.sortBy]}, film.id asc`;
+    } else {
+        query += ` order by film.release_date asc`;
     }
-    query += ` film.release_date asc`;
     const conn = await getPool().getConnection();
     const [ result ] = await conn.query(query);
     await conn.release();

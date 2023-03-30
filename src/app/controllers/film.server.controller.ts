@@ -105,6 +105,10 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
         return;
     }
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No user with specified ID");
+            return;
+        }
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;
         // Check user is logged in and valid
@@ -122,7 +126,7 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
             res.statusMessage = "Forbidden. Only the director of an film may change it";
             res.status(403).send();
             return;
-        } if (Date.parse((film[0] as any).release) > Date.now()) { // Check release date hasn't already passed
+        } if (Date.parse((film[0] as any).releaseDate) < Date.now()) { // Check release date hasn't already passed
             res.statusMessage = "Forbidden. cannot change the releaseDate since it has already passed";
             res.status(403).send();
             return;
@@ -130,7 +134,7 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
             res.statusMessage = "Forbidden. cannot edit a film that has a review placed";
             res.status(403).send();
             return;
-        } if (req.body.releaseDate && Date.parse(req.body.releaseDate) > Date.now()) { // Check release date is not in the past if given
+        } if (req.body.releaseDate && Date.parse(req.body.releaseDate) < Date.now()) { // Check release date is not in the past if given
             res.statusMessage = "Forbidden. cannot release a film in the past";
             res.status(403).send();
             return;

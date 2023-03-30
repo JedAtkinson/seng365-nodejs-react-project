@@ -19,7 +19,6 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
             const contentType = result[0].image_filename.split('.')[1];
             if (!VALID_IMAGE_TYPES.includes(contentType)) throw new Error("Invalid filename");
             const content = await fs.readFileSync('storage/images/' + result[0].image_filename);
-            Logger.info(content);
             res.setHeader("Content-Type", "image/"+contentType);
             res.status(200).send(content);
         } else {
@@ -62,7 +61,6 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
         }
         const filename = `user_${id}.${contentType}`;
         const fileExists = (fs.existsSync(`storage/images/${filename}`));
-        Logger.info(req.body);
         await fs.writeFile(`storage/images/${filename}`, req.body, 'binary');
         await usersImage.insert(parseInt(id, 10), filename);
         if (fileExists) {
