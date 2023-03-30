@@ -64,8 +64,9 @@ const alter = async (id: number, userData: any): Promise<ResultSetHeader[]> => {
     let query = 'update user set ';
     for (const field in userData) {
         if (field in fieldToDB)
-            query += `${fieldToDB[field]} = '${userData[field]}' ` ;
+            query += `${fieldToDB[field]} = '${userData[field]}', ` ;
     }
+    if (query[query.length-2] === ',') query = query.slice(0, query.length-2);
     query += `where id = ${id}`;
     const conn = await getPool().getConnection();
     const [ result ] = await conn.query(query);

@@ -41,23 +41,51 @@ const getOne = async (id: number): Promise<ResultSetHeader[]> => {
 }
 
 const insert = async (data: any): Promise<ResultSetHeader> => {
-    Logger.info("Getting all genres from database");
+    Logger.info("Inserting film into database");
     const conn = await getPool().getConnection();
     const query = `insert into film (title, description, release_date, runtime, director_id, genre_id, age_rating) values
                     ('${data.title}', '${data.description}', '${data.releaseDate}', ${data.runtime}, ${data.directorId}, ${data.genreId}, '${data.ageRating}')`;
-    Logger.info(query);
     const [ result ] = await conn.query(query);
     await conn.release();
     return result;
 }
 
-const getAllGenres = async (): Promise<{"id": string, "name": string}[]> => {
+const update = async (id: number, data: any): Promise<ResultSetHeader> => {
+    Logger.info(`Updating film ${id} in database`);
+    const fieldToDB: {[key: string]: string} = {"title": "title", "description": "description", "releaseDate": "release_date", "genreId": "genre_id", "runtime": "runtime", "ageRating":"age_rating"};
+    const numberFields = ["genreId", "runtime"];
+    let query = 'update film set ';
+    for (const field in data) {
+        if (field in fieldToDB)
+            if (field in numberFields)
+                query += `${fieldToDB[field]} = ${data[field]}, ` ;
+            else
+                query += `${fieldToDB[field]} = '${data[field]}', ` ;
+    }
+    if (query[query.length-2] === ',') query = query.slice(0, query.length-2);
+    query += `where id = ${id}`;
+    const conn = await getPool().getConnection();
+    const [ result ] = await conn.query(query);
+    await conn.release();
+    return result;
+}
+
+const remove = async (id: number): Promise<ResultSetHeader> => {
+    Logger.info(`Deleting film ${id} from database`);
+    const conn = await getPool().getConnection();
+    const query = `delete from film where id = ${id}`;
+    const result = await conn.query(query);
+    await conn.release();
+    return result;
+}
+
+const getAllGenres = async (): Promise<{"genreId": string, "name": string}[]> => {
     Logger.info("Getting all genres from database");
     const conn = await getPool().getConnection();
-    const query = `select id, name from genre`;
+    const query = `select id as genreId, name from genre`;
     const [ result ] = await conn.query(query);
     await conn.release();
     return result;
 }
 
-export { getAll, getOne, insert, getAllGenres }
+export { getAll, getOne, insert, update, remove, getAllGenres }

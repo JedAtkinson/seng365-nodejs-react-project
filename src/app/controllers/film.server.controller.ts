@@ -3,7 +3,6 @@ import Logger from "../../config/logger";
 import * as films from "../models/film.server.model";
 import * as schemas from '../resources/schemas.json';
 import {validateSchema} from './validator';
-import {release} from "os";
 import {findUserIdByToken} from "../models/user.server.model";
 
 
@@ -11,7 +10,7 @@ const viewAll = async (req: Request, res: Response): Promise<void> => {
     let validation = await validateSchema(schemas.film_search, req.query);
     if (req.query.genreIds && validation === true) {
         const genreIds = Array.isArray(req.query.genreIds) ? req.query.genreIds : [req.query.genreIds];
-        const validGenreIds: string[] = (await films.getAllGenres()).map(a => a.id.toString());
+        const validGenreIds: string[] = (await films.getAllGenres()).map(a => a.genreId.toString());
         validation = genreIds.every(val => validGenreIds.includes(val as string)) ? validation : false;
     }
     if (validation !== true) {
@@ -55,7 +54,7 @@ const getOne = async (req: Request, res: Response): Promise<void> => {
 
 const addOne = async (req: Request, res: Response): Promise<void> => {
     const validation = await validateSchema(schemas.film_post, req.body);
-    const validGenreIds = (await films.getAllGenres()).map(a => a.id);
+    const validGenreIds = (await films.getAllGenres()).map(a => a.genreId);
     if (validation !== true || !validGenreIds.includes(req.body.genreId)) {
         res.statusMessage = "Bad Request";
         res.status(400).send();
@@ -96,10 +95,50 @@ const addOne = async (req: Request, res: Response): Promise<void> => {
 }
 
 const editOne = async (req: Request, res: Response): Promise<void> => {
+    // Check data given is valid
+    const validation = await validateSchema(schemas.film_patch, req.body);
+    // Check genreId is in the database if given
+    const validGenreIds = (await films.getAllGenres()).map(a => a.genreId);
+    if (validation !== true || (req.body.genreId && !validGenreIds.includes(req.body.genreId))) {
+        res.statusMessage = "Bad Request";
+        res.status(400).send();
+        return;
+    }
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        const token = req.header('X-Authorization');
+        const authUserId = token != null ? await findUserIdByToken(token) : null;
+        // Check user is logged in and valid
+        if (authUserId === null) {
+            res.statusMessage = "Unauthorized";
+            res.status(401).send();
+            return;
+        }
+        const film = await films.getOne(parseInt(req.params.id, 10));
+        if (film.length === 0) { // Check film with id exists
+            res.statusMessage = "Not Found. No film found with id";
+            res.status(404).send();
+            return;
+        } if ((film[0] as any).directorId !== authUserId) { // Check authUser is the director of the film
+            res.statusMessage = "Forbidden. Only the director of an film may change it";
+            res.status(403).send();
+            return;
+        } if (Date.parse((film[0] as any).release) > Date.now()) { // Check release date hasn't already passed
+            res.statusMessage = "Forbidden. cannot change the releaseDate since it has already passed";
+            res.status(403).send();
+            return;
+        } if ((film[0] as any).numReviews !== 0) { // Check if review has been left on film
+            res.statusMessage = "Forbidden. cannot edit a film that has a review placed";
+            res.status(403).send();
+            return;
+        } if (req.body.releaseDate && Date.parse(req.body.releaseDate) > Date.now()) { // Check release date is not in the past if given
+            res.statusMessage = "Forbidden. cannot release a film in the past";
+            res.status(403).send();
+            return;
+        }
+
+        await films.update(parseInt(req.params.id, 10), req.body);
+        res.statusMessage = "OK";
+        res.status(200).send();
         return;
     } catch (err) {
         Logger.error(err);
@@ -111,9 +150,27 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
 
 const deleteOne = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        const token = req.header('X-Authorization');
+        const authUserId = token != null ? await findUserIdByToken(token) : null;
+        // Check user is logged in and valid
+        if (authUserId === null) {
+            res.statusMessage = "Unauthorized";
+            res.status(401).send();
+            return;
+        }
+        const film = await films.getOne(parseInt(req.params.id, 10));
+        if (film.length === 0) { // Check film with id exists
+            res.statusMessage = "Not Found. No film found with id";
+            res.status(404).send();
+            return;
+        } if ((film[0] as any).directorId !== authUserId) { // Check authUser is the director of the film
+            res.statusMessage = "Forbidden. Only the director of an film may change it";
+            res.status(403).send();
+            return;
+        }
+        await films.remove(parseInt(req.params.id, 10));
+        res.statusMessage = "OK";
+        res.status(200).send();
         return;
     } catch (err) {
         Logger.error(err);
@@ -125,9 +182,9 @@ const deleteOne = async (req: Request, res: Response): Promise<void> => {
 
 const getGenres = async (req: Request, res: Response): Promise<void> => {
     try{
-        // Your code goes here
-        res.statusMessage = "Not Implemented Yet!";
-        res.status(501).send();
+        const result = await films.getAllGenres();
+        res.statusMessage = "OK";
+        res.status(200).send(result);
         return;
     } catch (err) {
         Logger.error(err);
