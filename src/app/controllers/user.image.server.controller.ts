@@ -38,6 +38,10 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No user with specified ID");
+            return;
+        }
         const id = req.params.id;
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;
@@ -82,6 +86,10 @@ const setImage = async (req: Request, res: Response): Promise<void> => {
 
 const deleteImage = async (req: Request, res: Response): Promise<void> => {
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No user with specified ID");
+            return;
+        }
         const id = req.params.id;
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;

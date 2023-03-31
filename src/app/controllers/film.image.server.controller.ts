@@ -38,7 +38,10 @@ const getImage = async (req: Request, res: Response): Promise<void> => {
 
 const setImage = async (req: Request, res: Response): Promise<void> => {
     try{
-        Logger.info(req.body);
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
         const id = req.params.id;
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;

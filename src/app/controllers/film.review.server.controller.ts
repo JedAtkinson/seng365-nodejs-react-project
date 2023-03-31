@@ -9,6 +9,15 @@ import * as films from "../models/film.server.model";
 
 const getReviews = async (req: Request, res: Response): Promise<void> => {
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
+        const film = await films.getOne(parseInt(req.params.id, 10));
+        if (film.length === 0) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
         const result = await reviews.getOne(parseInt(req.params.id, 10));
         res.statusMessage = "OK";
         res.status(200).send(result);
@@ -30,6 +39,10 @@ const addReview = async (req: Request, res: Response): Promise<void> => {
         return;
     }
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;
         if (authUserId === null) { // Check if user is logged in with valid token

@@ -35,6 +35,10 @@ const viewAll = async (req: Request, res: Response): Promise<void> => {
 
 const getOne = async (req: Request, res: Response): Promise<void> => {
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
         const result = await films.getOne(parseInt(req.params.id, 10));
         if (result.length !== 0) {
             res.statusMessage = "OK";
@@ -106,7 +110,7 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
     }
     try{
         if (isNaN(parseInt(req.params.id, 10))) {
-            res.status(404).send("Not Found. No user with specified ID");
+            res.status(404).send("Not Found. No film found with id");
             return;
         }
         const token = req.header('X-Authorization');
@@ -154,6 +158,10 @@ const editOne = async (req: Request, res: Response): Promise<void> => {
 
 const deleteOne = async (req: Request, res: Response): Promise<void> => {
     try{
+        if (isNaN(parseInt(req.params.id, 10))) {
+            res.status(404).send("Not Found. No film found with id");
+            return;
+        }
         const token = req.header('X-Authorization');
         const authUserId = token != null ? await findUserIdByToken(token) : null;
         // Check user is logged in and valid
